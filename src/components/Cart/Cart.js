@@ -1,11 +1,15 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import CartContext from "../../store/cart-context";
 import CartItem from "./CartItem";
 import Modal from "../UI/Modal";
 
 import classes from "./Cart.module.css";
+import { Fragment } from "react/cjs/react.production.min";
+import Checkout from "./Checkout";
 
 const Cart = (props) => {
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+
   const cartCtx = useContext(CartContext);
 
   const totalAmount = `$${cartCtx.totalAmount.toFixed(2)}`;
@@ -34,8 +38,14 @@ const Cart = (props) => {
     </ul>
   );
 
-  return (
-    <Modal onHideCart={props.onHideCart}>
+  const onCheckout = () => {
+    setIsCheckingOut(true);
+  };
+
+  const content = isCheckingOut ? (
+    <Checkout onHideCart={props.onHideCart} />
+  ) : (
+    <Fragment>
       {cartItems}
       <div className={classes.total}>
         <span>Total Amount</span>
@@ -45,10 +55,16 @@ const Cart = (props) => {
         <button className={classes["button--alt"]} onClick={props.onHideCart}>
           Close
         </button>
-        {hasItems && <button className={classes.button}>Order</button>}
+        {hasItems && (
+          <button className={classes.button} onClick={onCheckout}>
+            Order
+          </button>
+        )}
       </div>
-    </Modal>
+    </Fragment>
   );
+
+  return <Modal onHideCart={props.onHideCart}>{content}</Modal>;
 };
 
 export default Cart;
