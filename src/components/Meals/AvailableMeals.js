@@ -1,3 +1,4 @@
+import { useCallback, useState, useEffect } from "react";
 import Card from "../UI/Card";
 
 import classes from "./AvailableMeals.module.css";
@@ -29,11 +30,37 @@ const DUMMY_MEALS = [
     price: 18.99,
   },
 ];
-
 // NOTE: Above is fake data, normally would retrieve actual data from a server
+console.log(DUMMY_MEALS);
 
 const AvailableMeals = () => {
-  const mealsList = DUMMY_MEALS.map((meal) => {
+  const [meals, setMeals] = useState([]);
+
+  const retrieveMeals = useCallback(async () => {
+    const res = await fetch(
+      "https://react-http-d82d4-default-rtdb.firebaseio.com/meals.json"
+    );
+    const data = await res.json();
+
+    const mealsData = [];
+
+    for (const key in data) {
+      mealsData.push({
+        id: key,
+        name: data[key].name,
+        description: data[key].description,
+        price: data[key].price,
+      });
+    }
+
+    setMeals(mealsData);
+  }, []);
+
+  useEffect(() => {
+    retrieveMeals();
+  }, [retrieveMeals]);
+
+  const mealsList = meals.map((meal) => {
     return (
       <MealItem
         key={meal.id}
