@@ -6,26 +6,34 @@ import classes from "./Checkout.module.css";
 
 const Checkout = (props) => {
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState(null);
 
   const validateInput = (text) => text.trim() !== "";
 
   const cartCtx = useContext(CartContext);
 
-  const uploadOrder = async (name, address) => {
-    const uploadData = { name, address, items: cartCtx.items };
+  const uploadOrder = async (name, street, city, postalCode) => {
+    try {
+      const address = { street, city, postalCode };
+      const uploadData = { name, address, items: cartCtx.items };
 
-    const res = await fetch(
-      "https://react-http-d82d4-default-rtdb.firebaseio.com/orders.json",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(uploadData),
+      const res = await fetch(
+        "https://react-http-d82d4-default-rtdb.firebaseio.com/orders.json",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(uploadData),
+        }
+      );
+
+      if (!res.ok) {
+        throw new Error(res.message);
       }
-    );
 
-    const data = await res.json();
-
-    console.log(data);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const {
@@ -38,17 +46,33 @@ const Checkout = (props) => {
   } = useInput(validateInput);
 
   const {
-    enteredValue: addressValue,
-    isValid: addressIsValid,
-    hasError: addressHasError,
-    valueChangeHandler: addressChangeHandler,
-    valueBlurHandler: addressBlurHandler,
-    reset: addressReset,
+    enteredValue: streetValue,
+    isValid: streetIsValid,
+    hasError: streetHasError,
+    valueChangeHandler: streetChangeHandler,
+    valueBlurHandler: streetBlurHandler,
+    reset: streetReset,
+  } = useInput(validateInput);
+  const {
+    enteredValue: cityValue,
+    isValid: cityIsValid,
+    hasError: cityHasError,
+    valueChangeHandler: cityChangeHandler,
+    valueBlurHandler: cityBlurHandler,
+    reset: cityReset,
+  } = useInput(validateInput);
+  const {
+    enteredValue: postalCodeValue,
+    isValid: postalCodeIsValid,
+    hasError: postalCodeHasError,
+    valueChangeHandler: postalCodeChangeHandler,
+    valueBlurHandler: postalCodeBlurHandler,
+    reset: postalCodeReset,
   } = useInput(validateInput);
 
   let formIsValid = false;
 
-  if (nameIsValid && addressIsValid) {
+  if (nameIsValid && streetIsValid && cityIsValid && postalCodeIsValid) {
     formIsValid = true;
   }
 
@@ -57,14 +81,18 @@ const Checkout = (props) => {
 
     if (!formIsValid) {
       nameBlurHandler();
-      addressBlurHandler();
+      streetBlurHandler();
+      cityBlurHandler();
+      postalCodeBlurHandler();
       return;
     }
 
-    uploadOrder(nameValue, addressValue);
+    uploadOrder(nameValue, streetValue, cityValue, postalCodeValue);
 
     nameReset();
-    addressReset();
+    streetReset();
+    cityReset();
+    postalCodeReset();
     cartCtx.clearCart();
 
     setIsSubmitted(true);
@@ -91,21 +119,49 @@ const Checkout = (props) => {
       </div>
       <div
         className={`${classes.control} ${
-          addressHasError ? classes.invalid : ""
+          streetHasError ? classes.invalid : ""
         }`}
       >
-        <label htmlFor="address">Address</label>
+        <label htmlFor="street">Street</label>
         <input
           type="text"
-          id="address"
-          onChange={addressChangeHandler}
-          onBlur={addressBlurHandler}
-          value={addressValue}
+          id="street"
+          onChange={streetChangeHandler}
+          onBlur={streetBlurHandler}
+          value={streetValue}
         />
-        {addressHasError && <p>Address is required.</p>}
+        {streetHasError && <p>Street is required.</p>}
+      </div>
+      <div
+        className={`${classes.control} ${cityHasError ? classes.invalid : ""}`}
+      >
+        <label htmlFor="city">City</label>
+        <input
+          type="text"
+          id="city"
+          onChange={cityChangeHandler}
+          onBlur={cityBlurHandler}
+          value={cityValue}
+        />
+        {cityHasError && <p>City is required.</p>}
+      </div>
+      <div
+        className={`${classes.control} ${
+          postalCodeHasError ? classes.invalid : ""
+        }`}
+      >
+        <label htmlFor="postalCode">Postal Code</label>
+        <input
+          type="text"
+          id="postalCode"
+          onChange={postalCodeChangeHandler}
+          onBlur={postalCodeBlurHandler}
+          value={postalCodeValue}
+        />
+        {postalCodeHasError && <p>Postal Code is required.</p>}
       </div>
       <div className={classes.actions}>
-        <button type="button" onClick={props.onHideCart}>
+        <button type="button" onClick={props.onHideCheckout}>
           Cancel
         </button>
         <button className={classes.submit} type="submit">
@@ -116,6 +172,10 @@ const Checkout = (props) => {
   ) : (
     <p>Order Submitted!</p>
   );
+
+  if (error) {
+    return <p>Something went wrong!</p>;
+  }
 
   return content;
 };

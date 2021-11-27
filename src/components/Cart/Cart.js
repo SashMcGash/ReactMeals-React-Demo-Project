@@ -4,7 +4,6 @@ import CartItem from "./CartItem";
 import Modal from "../UI/Modal";
 
 import classes from "./Cart.module.css";
-import { Fragment } from "react/cjs/react.production.min";
 import Checkout from "./Checkout";
 
 const Cart = (props) => {
@@ -42,15 +41,20 @@ const Cart = (props) => {
     setIsCheckingOut(true);
   };
 
-  const content = isCheckingOut ? (
-    <Checkout onHideCart={props.onHideCart} />
-  ) : (
-    <Fragment>
+  const HideCheckout = () => {
+    setIsCheckingOut(false);
+  };
+
+  return (
+    <Modal onHideCart={props.onHideCart}>
       {cartItems}
       <div className={classes.total}>
         <span>Total Amount</span>
         <span>{totalAmount}</span>
       </div>
+      {isCheckingOut && (
+        <Checkout onHideCheckout={HideCheckout} onHideCart={props.onHideCart} />
+      )}
       <div className={classes.actions}>
         <button className={classes["button--alt"]} onClick={props.onHideCart}>
           Close
@@ -61,10 +65,8 @@ const Cart = (props) => {
           </button>
         )}
       </div>
-    </Fragment>
+    </Modal>
   );
-
-  return <Modal onHideCart={props.onHideCart}>{content}</Modal>;
 };
 
 export default Cart;
